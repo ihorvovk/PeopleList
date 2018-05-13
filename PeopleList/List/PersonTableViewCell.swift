@@ -11,20 +11,24 @@ import UIKit
 class PersonTableViewCell: UITableViewCell {
     
     override func prepareForReuse() {
-        imageLoadingTask?.cancel()
-        imageLoadingTask = nil
+        if let imageLoadingTask = imageLoadingTask {
+            PeopleManager.shared.cancelLoadingProfileImage(task: imageLoadingTask)
+        }
         
+        imageLoadingTask = nil
         activityIndicator.stopAnimating()
     }
 
     func fill(person: Person) {
         nameLabel.text = person.name
+        profileImageView.image = nil
         
         if let profileImageURL = person.profileImageURL {
             activityIndicator.startAnimating()
             imageLoadingTask = PeopleManager.shared.loadProfileImage(url: profileImageURL) { [weak self] image in
                 self?.profileImageView.image = image
                 self?.activityIndicator.stopAnimating()
+                self?.imageLoadingTask = nil
             }
         }
     }

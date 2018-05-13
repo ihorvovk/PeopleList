@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 import UIKit
 
-class PeopleManager {
+class PeopleManager: NSObject {
     
     static let shared = PeopleManager()
     
@@ -57,33 +57,65 @@ class PeopleManager {
         }
     }
     
-    func loadProfileImage(url: URL, completion: @escaping (UIImage?) -> Void) -> URLSessionTask {
-        let task = imageDownloadingSession.dataTask(with: url) { (data, response, error) in
-            if let data = data, let image = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    completion(image)
-                }
-            } else {
-                print("Failed to load profile image for url - \(url)")
-                DispatchQueue.main.async {
-                    completion(nil)
-                }
-            }
+    func loadProfileImage(url: URL, completion: @escaping (UIImage?) -> Void) -> URLSessionTask? {
+        if let cachedImage = imagesCache.object(forKey: url as NSURL) {
+            completion(cachedImage)
+            return nil
         }
+        
+        let task = imageDownloadingSession.downloadTask(with: url)
+        loadingTaskCompletions[task.taskIdentifier] = completion
         
         task.resume()
         return task
+    }
+    
+    func cancelLoadingProfileImage(task: URLSessionTask) {
+        task.cancel()
+        loadingTaskCompletions.removeValue(forKey: task.taskIdentifier)
     }
     
     // MARK: - Implementation
     
     lazy var peopleNames = ["Adam", "Henry", "Jeremy", "Kyle", "Mark", "Douglas", "Marion", "Jade", "Madison", "Robert", "Peyton", "Rodney", "Lucas", "Sam", "Eugene", "Laurie", "Jason", "Edward", "Toby", "Johnny"]
     lazy var imageDownloadingSession: URLSession = {
-        let configuration = URLSessionConfiguration.default
+        let configuration = URLSessionConfiguration.background(withIdentifier: "com.ihor.m.vovk.PeopleList.imageDownloading")
         configuration.httpMaximumConnectionsPerHost = 1
         configuration.httpShouldUsePipelining = true
+        configuration.isDiscretionary = true
         
-        let result = URLSession(configuration: configuration)
-        return result
+        return URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
     }()
+    
+    fileprivate var loadingTaskCompletions: [Int: (UIImage?) -> Void] = [:]
+    fileprivate let imagesCache = NSCache<NSURL, UIImage>()
+}
+
+extension PeopleManager: URLSessionDelegate {
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error = error, let completion = loadingTaskCompletions[task.taskIdentifier] {
+            print("Failed to load profile image for url - \(task.originalRequest?.url?.absoluteString ?? ""). Error - \(error.localizedDescription)")
+            DispatchQueue.main.async {
+                completion(nil)
+                self.loadingTaskCompletions.removeValue(forKey: task.taskIdentifier)
+            }
+        }
+    }
+}
+
+extension PeopleManager: URLSessionDownloadDelegate {
+    
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        if let data = try? Data(contentsOf: location), let image = UIImage(data: data), let completion = loadingTaskCompletions[downloadTask.taskIdentifier] {
+            DispatchQueue.main.async {
+                completion(image)
+
+                self.loadingTaskCompletions.removeValue(forKey: downloadTask.taskIdentifier)
+                if let url = downloadTask.originalRequest?.url {
+                    self.imagesCache.setObject(image, forKey: url as NSURL)
+                }
+            }
+        }
+    }
 }
