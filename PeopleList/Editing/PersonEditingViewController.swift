@@ -24,8 +24,7 @@ class PersonEditingViewController: UIViewController {
         super.viewWillDisappear(animated)
         
         if let name = nameTextField.text, name != person.name {
-            person.name = name
-            PeopleManager.shared.saveViewContext()
+            PeopleManager.shared.updatePerson(person, setName: name)
         }
     }
     

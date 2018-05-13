@@ -17,11 +17,11 @@ class PersonTableViewCell: UITableViewCell {
         
         imageLoadingTask = nil
         activityIndicator.stopAnimating()
+        profileImageView.image = nil
     }
 
     func fill(person: Person) {
         nameLabel.text = person.name
-        profileImageView.image = nil
         
         if let profileImageURL = person.profileImageURL {
             activityIndicator.startAnimating()
@@ -39,5 +39,5 @@ class PersonTableViewCell: UITableViewCell {
     @IBOutlet private weak var profileImageView: UIImageView!
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
-    var imageLoadingTask: URLSessionTask?
+    private var imageLoadingTask: URLSessionTask?
 }

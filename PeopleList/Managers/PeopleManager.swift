@@ -14,26 +14,8 @@ class PeopleManager: NSObject {
     
     static let shared = PeopleManager()
     
-    let persistentContainer: NSPersistentContainer = {
-        let container = NSPersistentContainer(name: "PeopleList")
-        container.loadPersistentStores(completionHandler: { (storeDescription, error) in
-            if let error = error {
-                print("Failed to load persistent stores \(error.localizedDescription)")
-            }
-        })
-        
-        return container
-    }()
-    
-    func saveViewContext () {
-        let context = persistentContainer.viewContext
-        if context.hasChanges {
-            do {
-                try context.save()
-            } catch {
-                print("Failed to save context \(error.localizedDescription)")
-            }
-        }
+    var viewContext: NSManagedObjectContext {
+        return persistentContainer.viewContext
     }
     
     func fillDatabaseWithPeople(completion: @escaping () -> Void) {
@@ -74,6 +56,21 @@ class PeopleManager: NSObject {
         loadingTaskCompletions.removeValue(forKey: task.taskIdentifier)
     }
     
+    func updatePerson(_ person: Person, setName name: String) {
+        let personID = person.objectID
+        persistentContainer.performBackgroundTask { context in
+            if let person = context.object(with: personID) as? Person {
+                person.name = name
+            }
+            
+            do {
+                try context.save()
+            } catch {
+                print("Failed to save person's name")
+            }
+        }
+    }
+    
     // MARK: - Implementation
     
     lazy var peopleNames = ["Adam", "Henry", "Jeremy", "Kyle", "Mark", "Douglas", "Marion", "Jade", "Madison", "Robert", "Peyton", "Rodney", "Lucas", "Sam", "Eugene", "Laurie", "Jason", "Edward", "Toby", "Johnny"]
@@ -89,6 +86,18 @@ class PeopleManager: NSObject {
     
     fileprivate var loadingTaskCompletions: [Int: (UIImage?) -> Void] = [:]
     fileprivate let imagesCache = NSCache<NSURL, UIImage>()
+    
+    private let persistentContainer: NSPersistentContainer = {
+        let container = NSPersistentContainer(name: "PeopleList")
+        container.loadPersistentStores(completionHandler: { (storeDescription, error) in
+            if let error = error {
+                print("Failed to load persistent stores \(error.localizedDescription)")
+            }
+        })
+        
+        container.viewContext.automaticallyMergesChangesFromParent = true
+        return container
+    }()
 }
 
 extension PeopleManager: URLSessionDelegate {

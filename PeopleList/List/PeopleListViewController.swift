@@ -17,7 +17,7 @@ class PeopleListViewController: UIViewController {
         let fetchRequest: NSFetchRequest<Person> = Person.fetchRequest()
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "number", ascending: true)]
         
-        fetchResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: PeopleManager.shared.persistentContainer.viewContext, sectionNameKeyPath: nil, cacheName: nil)
+        fetchResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: PeopleManager.shared.viewContext, sectionNameKeyPath: nil, cacheName: nil)
         fetchResultsController.delegate = self
         
         try? fetchResultsController.performFetch()
