@@ -17,8 +17,8 @@ class PeopleManager: NSObject {
     let persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "PeopleList")
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
-            if let error = error as NSError? {
-                fatalError("Unresolved error \(error), \(error.userInfo)")
+            if let error = error {
+                print("Failed to load persistent stores \(error.localizedDescription)")
             }
         })
         
@@ -31,8 +31,7 @@ class PeopleManager: NSObject {
             do {
                 try context.save()
             } catch {
-                let nserror = error as NSError
-                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
+                print("Failed to save context \(error.localizedDescription)")
             }
         }
     }
@@ -78,6 +77,7 @@ class PeopleManager: NSObject {
     // MARK: - Implementation
     
     lazy var peopleNames = ["Adam", "Henry", "Jeremy", "Kyle", "Mark", "Douglas", "Marion", "Jade", "Madison", "Robert", "Peyton", "Rodney", "Lucas", "Sam", "Eugene", "Laurie", "Jason", "Edward", "Toby", "Johnny"]
+    
     lazy var imageDownloadingSession: URLSession = {
         let configuration = URLSessionConfiguration.background(withIdentifier: "com.ihor.m.vovk.PeopleList.imageDownloading")
         configuration.httpMaximumConnectionsPerHost = 1

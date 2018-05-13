@@ -14,8 +14,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-        let isLaunchedBefore = UserDefaults.standard.bool(forKey: "isLaunchedBefore")
-        if !isLaunchedBefore {
+        let launchedBefore = UserDefaults.standard.bool(forKey: "launchedBefore")
+        if !launchedBefore {
             PeopleManager.shared.fillDatabaseWithPeople() {
                 let alertController = UIAlertController(title: NSLocalizedString("Welcome to the app!", comment: ""), message: nil, preferredStyle: .alert)
                 let dismissAction = UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default)
@@ -24,7 +24,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 self.window?.rootViewController?.present(alertController, animated: true, completion: nil)
             }
             
-            UserDefaults.standard.set(true, forKey: "isLaunchedBefore")
+            UserDefaults.standard.set(true, forKey: "launchedBefore")
         }
         
         return true
