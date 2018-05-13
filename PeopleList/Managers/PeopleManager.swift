@@ -8,6 +8,7 @@
 
 import Foundation
 import CoreData
+import UIKit
 
 class PeopleManager {
     
@@ -56,7 +57,33 @@ class PeopleManager {
         }
     }
     
+    func loadProfileImage(url: URL, completion: @escaping (UIImage?) -> Void) -> URLSessionTask {
+        let task = imageDownloadingSession.dataTask(with: url) { (data, response, error) in
+            if let data = data, let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    completion(image)
+                }
+            } else {
+                print("Failed to load profile image for url - \(url)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+            }
+        }
+        
+        task.resume()
+        return task
+    }
+    
     // MARK: - Implementation
     
-    private let peopleNames = ["Adam", "Henry", "Jeremy", "Kyle", "Mark", "Douglas", "Marion", "Jade", "Madison", "Robert", "Peyton", "Rodney", "Lucas", "Sam", "Eugene", "Laurie", "Jason", "Edward", "Toby", "Johnny"]
+    lazy var peopleNames = ["Adam", "Henry", "Jeremy", "Kyle", "Mark", "Douglas", "Marion", "Jade", "Madison", "Robert", "Peyton", "Rodney", "Lucas", "Sam", "Eugene", "Laurie", "Jason", "Edward", "Toby", "Johnny"]
+    lazy var imageDownloadingSession: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.httpMaximumConnectionsPerHost = 1
+        configuration.httpShouldUsePipelining = true
+        
+        let result = URLSession(configuration: configuration)
+        return result
+    }()
 }
